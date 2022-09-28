@@ -1,11 +1,21 @@
+from sqlite3 import connect
 import sys
 import os
 from urllib.error import HTTPError
 from dotenv import load_dotenv
-import requests
+import grequests
 import time
 import socket
+from clashTag import PlayerTag
+import json
+import requests
 
+def dump(data):
+    try:
+        with open("data/"+data["tag"]+".json","w") as f:
+            json.dump(data,f)
+    except:
+        pass
 
 class NoPlayerException(Exception):
     pass
@@ -28,35 +38,65 @@ def notifyonfailure(message):
     return sent
 
 
-def getPlayerData(tag):
-    response = requests.get(url= os.environ["BASEURL"]+tag,
-        headers= {"Accept": "application/json", "Authorization": "Bearer "+ os.environ["TOKEN"]})
-    if not response.status_code==200:
-        raise HTTPError(response)
-
-    body= response.json()
-
-    if body.get("reason")=="notFound":
-        raise NoPlayerException("")
+def getPlayerData(tags):
+    if len(tags)==0:
+        return list()
     
-    if body.get("tag")== None:
-        raise Exception("smth wrong with body")
+    requests = (grequests.get(url= os.environ["BASEURL"]+tag,
+        headers= {"Accept": "application/json", "Authorization": "Bearer "+ os.environ["TOKEN"]}) for tag in tags)
+    responses = grequests.map(requests)
+    for i in range(len(tags)):
+        responses[i] = (tags[i],responses[i])
 
-    return body
+    players = list()
+    tagsToTryAgain = list()
+    
+    for tag,res in responses:
+    
+        if res.status_code==200:
+            players.append(res.json())
+        elif res.status_code==404:
+            continue
+        else:
+            tagsToTryAgain.append(tag)
+            
+    return players + getPlayerData(tagsToTryAgain)
 
 
 def main():
+    start_time = time.time()
+    no_of_req = 80
+    total_tags = 1000
+    batches = int(total_tags / no_of_req)
+    basetag= PlayerTag("Y8YGQLGY")  
     try:
-        print(getPlayerData("Y8YGQLJ0"))
+        
+        for i in range(batches): 
+            tags = list()
+            
+            for j in range(no_of_req):
+                tags.append(str(basetag.getNext()))
+
+            datalist = getPlayerData(tags)
+
+            for data in datalist:
+                dump(data)
+
+            print((i+1)/batches)
+        end_time = time.time()
+
+        print((end_time-start_time))
     except NoPlayerException:
         pass
-    except Exception as e:
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.connect(("8.8.8.8", 80))
-        ip = s.getsockname()[0]
+    #except Exception as e:
+    #    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    #    s.connect(("8.8.8.8", 80))
+    #    ip = s.getsockname()[0]
 
-        notifyonfailure(ip+"\n"+str(e.with_traceback))
+    #    notifyonfailure(ip+"\n"+str(e.with_traceback))
     return 0
+
+
 
 if __name__=="__main__":
     load_dotenv()
