@@ -8,7 +8,7 @@ class PlayerTag():
     def __init__(self, tag:string):
 
         if tag=="":
-            self.tag=tag
+            self.tag=list("YYYYYYYY")
         else:
             if len(tag)!=8:
                 raise ValueError("length of tag is not equal 8")
@@ -21,7 +21,7 @@ class PlayerTag():
     
 
     def _increment(self):
-        if self.tag=="":
+        if self.tag==list("YYYYYYYY"):
             self.tag=list("00000000")
         else:
             if self.tag == list("YYYYYYYY"):

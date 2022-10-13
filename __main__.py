@@ -9,6 +9,7 @@ import socket
 from clashTag import PlayerTag
 import json
 import requests
+from db import DB
 
 def dump(data):
     try:
@@ -65,10 +66,11 @@ def getPlayerData(tags):
 
 def main():
     start_time = time.time()
-    no_of_req = 80
-    total_tags = 1000
+    no_of_req = 100
+    total_tags = 20000
     batches = int(total_tags / no_of_req)
-    basetag= PlayerTag("Y8YGQLGY")  
+    basetag= PlayerTag("Y8YGQLGY")
+    DB.connect(os.environ["DBHOST"],os.environ["DBUSER"], os.environ["DBPASSWORD"], os.environ["DBNAME"])  
     try:
         
         for i in range(batches): 
@@ -77,10 +79,11 @@ def main():
             for j in range(no_of_req):
                 tags.append(str(basetag.getNext()))
 
-            datalist = getPlayerData(tags)
+            jsonlist = getPlayerData(tags)
 
-            for data in datalist:
-                dump(data)
+            if len(jsonlist)>0:
+                DB.insert(jsonlist)
+                pass
 
             print((i+1)/batches)
         end_time = time.time()
@@ -94,6 +97,8 @@ def main():
     #    ip = s.getsockname()[0]
 
     #    notifyonfailure(ip+"\n"+str(e.with_traceback))
+    finally:
+        DB.close()
     return 0
 
 
