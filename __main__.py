@@ -110,8 +110,8 @@ def main():
         ip = s.getsockname()[0]
 
         notifyonfailure(ip+"\n"+str(e.with_traceback))
-    finally:
-        DB.close()
+        
+    DB.close()
     return 0
 
 
