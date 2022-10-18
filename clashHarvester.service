@@ -1,0 +1,11 @@
+[Unit]
+Description=clashHarv
+
+[Service]
+ExecStart=/usr/bin/python3 /root/clashHarvester
+Restart=on-failure
+TimeoutStopSec=3600
+
+[Install]
+WantedBy=default.target
+

@@ -1,5 +1,5 @@
 import psycopg2
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 
@@ -24,7 +24,7 @@ class DB():
 
         #save current DECK
         records_list_template_cards = ','.join(['%s'] * len(cardtuples))
-        insert_query_card = 'insert into tb_plays_card values {}'.format(records_list_template_cards)
+        insert_query_card = 'insert into tb_plays values {}'.format(records_list_template_cards)
         DB._cur.execute(insert_query_card, cardtuples)
 
         DB._conn.commit()
@@ -55,13 +55,15 @@ class DB():
             prevTrophies= None
             prevBestTrophies = None
             bestSeasonTrophies = None
+            previousSeason = None
+            bestSeason = None
             if "leagueStatistics" in json.keys():
                 leaque = json.get("leagueStatistics")
                 if "currentSeason" in leaque.keys():
                     currentTrophies = leaque.get("currentSeason").get("trophies")
                     currentBestTrophies = leaque.get("currentSeason").get("bestTrophies")
                 if "previousSeason" in leaque.keys():
-                    previousSeason = leaque.get("previusSeason").get("id")
+                    previousSeason = leaque.get("previousSeason").get("id")
                     prevTrophies = leaque.get("previousSeason").get("trophies")
                     prevBestTrophies = leaque.get("previousSeason").get("bestTrophies")
                 if "bestSeason" in leaque.keys():
@@ -80,7 +82,7 @@ class DB():
                 now.strftime("%Y-%m"),
                 previousSeason,
                 bestSeason,
-                datetime.timestamp(now),
+                datetime.now(timezone.utc),
                 prevBestTrophies,
                 prevTrophies,
                 bestSeasonTrophies,

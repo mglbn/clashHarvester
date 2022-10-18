@@ -1,7 +1,6 @@
 from sqlite3 import connect
 import sys
 import os
-from urllib.error import HTTPError
 from dotenv import load_dotenv
 import grequests
 import time
@@ -10,6 +9,19 @@ from clashTag import PlayerTag
 import json
 import requests
 from db import DB
+import manager
+import signal
+
+class GracefulKiller:
+    running = True
+    def __init__(self):
+        signal.signal(signal.SIGINT, self.exit_gracefully)
+        signal.signal(signal.SIGTERM, self.exit_gracefully)
+
+    def exit_gracefully(self, *args):
+        self.running = False
+
+signal.signal(signal.SIGTERM, exit_controlled)
 
 def dump(data):
     try:
@@ -65,38 +77,40 @@ def getPlayerData(tags):
 
 
 def main():
-    start_time = time.time()
-    no_of_req = 100
-    total_tags = 20000
-    batches = int(total_tags / no_of_req)
-    basetag= PlayerTag("Y8YGQLGY")
+
+    killer = GracefulKiller()
+    
+    task = None
     DB.connect(os.environ["DBHOST"],os.environ["DBUSER"], os.environ["DBPASSWORD"], os.environ["DBNAME"])  
     try:
-        
-        for i in range(batches): 
-            tags = list()
+        while killer.running:
+            lap = 0
+            task = manager.getNewWorkload()
+            no_batches = int(task.get("size") / task.get("batchsize"))
+
+            basetag = PlayerTag(task.get("tag"))
+            for i in range(no_batches):
+                tags = list()
+                for j in range(task.get("batchsize")):
+                    tags.append(str(basetag.getNext()))
+                data = getPlayerData(tags)
+                if len(data) > 0:
+                    DB.insert(data)
+
+            manager.confirm(task.get("tag"))
+            lap +=1
+            if lap == 5:
+                break
             
-            for j in range(no_of_req):
-                tags.append(str(basetag.getNext()))
-
-            jsonlist = getPlayerData(tags)
-
-            if len(jsonlist)>0:
-                DB.insert(jsonlist)
-                pass
-
-            print((i+1)/batches)
-        end_time = time.time()
-
-        print((end_time-start_time))
+            
     except NoPlayerException:
         pass
-    #except Exception as e:
-    #    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    #    s.connect(("8.8.8.8", 80))
-    #    ip = s.getsockname()[0]
+    except Exception as e:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        ip = s.getsockname()[0]
 
-    #    notifyonfailure(ip+"\n"+str(e.with_traceback))
+        notifyonfailure(ip+"\n"+str(e.with_traceback))
     finally:
         DB.close()
     return 0

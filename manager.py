@@ -1,16 +1,14 @@
 import requests
-from dotenv import load_dotenv
-import os
 
-load_dotenv()
-_mngnt_server_url= os.environ["MANAGER"]
+_mngnt_server_url= "http://91.200.100.224:17823"
 
-def getNewWorkload(oldtag=None):
-    if oldtag == None:
-        resp = requests.get(_mngnt_server_url + "/workload")
-    else:
-        para = {"oldTag": oldtag}
-        resp = requests.get(_mngnt_server_url + "/workload",params=para)
+def getNewWorkload():
+    
+    resp = requests.get(_mngnt_server_url + "/workload")
     json = resp.json()
+    print(json)
     return json
-        
+
+def confirm(oldtag):
+    para = {"oldtag":oldtag}
+    requests.get(_mngnt_server_url + "/confirmWorkload",params=para)
