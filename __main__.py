@@ -21,7 +21,6 @@ class GracefulKiller:
     def exit_gracefully(self, *args):
         self.running = False
 
-signal.signal(signal.SIGTERM, exit_controlled)
 
 def dump(data):
     try:
