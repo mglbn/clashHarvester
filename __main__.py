@@ -64,7 +64,9 @@ def getPlayerData(tags):
     tagsToTryAgain = list()
     
     for tag,res in responses:
-    
+        if res == None:
+            tagsToTryAgain.append(tag)
+            continue
         if res.status_code==200:
             players.append(res.json())
         elif res.status_code==404:
