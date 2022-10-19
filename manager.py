@@ -6,7 +6,6 @@ def getNewWorkload():
     
     resp = requests.get(_mngnt_server_url + "/workload")
     json = resp.json()
-    print(json)
     return json
 
 def confirm(oldtag):
