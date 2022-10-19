@@ -23,10 +23,14 @@ class DB():
         DB._cur.execute(insert_query_player, playertuples)
 
         #save current DECK
-        if len(cardtuples)>0:
-            records_list_template_cards = ','.join(['%s'] * len(cardtuples))
-            insert_query_card = 'insert into tb_plays values {}'.format(records_list_template_cards)
-            DB._cur.execute(insert_query_card, cardtuples)
+        try:
+            if len(cardtuples)>0:
+                records_list_template_cards = ','.join(['%s'] * len(cardtuples))
+                insert_query_card = 'insert into tb_plays values {}'.format(records_list_template_cards)
+                DB._cur.execute(insert_query_card, cardtuples)
+        except:
+            print(records_list_template_cards)
+            print(cardtuples)
 
         DB._conn.commit()
 
