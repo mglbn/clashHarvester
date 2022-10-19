@@ -28,9 +28,10 @@ class DB():
                 records_list_template_cards = ','.join(['%s'] * len(cardtuples))
                 insert_query_card = 'insert into tb_plays values {}'.format(records_list_template_cards)
                 DB._cur.execute(insert_query_card, cardtuples)
-        except:
+        except Exception as e:
             print(records_list_template_cards)
             print(cardtuples)
+            raise e
 
         DB._conn.commit()
 
